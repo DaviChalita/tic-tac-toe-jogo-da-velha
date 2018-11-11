@@ -5,22 +5,31 @@ import sys
 import time
 import random
 
-##
-# Funcoes uteis
-##
+# Funcoes
 
-# Limpa a tela.
-def limpaTela():
-    
+def enviaMensagem(msg):
+    message = pickle.dumps(msg)
+    connection.send(message)
+    time.sleep(0.1)
+    return msg
+
+def defineDimensao():
+    dim = int(input("Especifique a dimensão: "))
+    enviaMensagem(dim)
+    return dim
+
+def defineNumeroJogadores():
+    nJogadores = int(input("Especifique o numero de jogadores: "))
+    enviaMensagem(nJogadores)
+    return nJogadores
+
+def handleError(erro):    
+    enviaMensagem(erro)
+
+def limpaTela(): 
     os.system('cls' if os.name == 'nt' else 'clear')
 
-##
-# Funcoes de manipulacao do tabuleiro
-##
-
-# Imprime estado atual do tabuleiro
 def imprimeTabuleiro(tabuleiro):
-    # Limpa a tela
     limpaTela()
 
     # Imprime coordenadas horizontais
@@ -29,6 +38,7 @@ def imprimeTabuleiro(tabuleiro):
 
     for i in range(0, dim):
         sys.stdout.write("{0:2d} ".format(i))
+        formato = ("{0:2d} ".format(i))
 
     sys.stdout.write("\n")
 
@@ -98,12 +108,12 @@ def novoTabuleiro(dim):
     # em posicoes aleatorias.
     for j in range(0, dim // 2):
         for i in range(1, dim + 1):
+
             # Sorteio da posicao da segunda peca com valor 'i'
             maximo = len(posicoesDisponiveis)
-            indiceAleatorio = random.randint(0, maximo - 1)
-            time.sleep(0.05)
-            message = pickle.dumps(indiceAleatorio)
-            connection.send(message)
+            indiceAleatorio = random.randint(0, maximo - 1)            
+            enviaMensagem(indiceAleatorio)
+
             rI, rJ = posicoesDisponiveis.pop(indiceAleatorio)
 
             tabuleiro[rI][rJ] = -i
@@ -111,9 +121,7 @@ def novoTabuleiro(dim):
             # Sorteio da posicao da segunda peca com valor 'i'
             maximo = len(posicoesDisponiveis)
             indiceAleatorio = random.randint(0, maximo - 1)
-            time.sleep(0.05)
-            message = pickle.dumps(indiceAleatorio)
-            connection.send(message)
+            enviaMensagem(indiceAleatorio)
             rI, rJ = posicoesDisponiveis.pop(indiceAleatorio)
 
             tabuleiro[rI][rJ] = -i
@@ -127,6 +135,7 @@ def abrePeca(tabuleiro, i, j):
 
     if tabuleiro[i][j] == '-':
         return False
+
     elif tabuleiro[i][j] < 0:
         tabuleiro[i][j] = -tabuleiro[i][j]
         return True
@@ -140,6 +149,7 @@ def fechaPeca(tabuleiro, i, j):
 
     if tabuleiro[i][j] == '-':
         return False
+
     elif tabuleiro[i][j] > 0:
         tabuleiro[i][j] = -tabuleiro[i][j]
         return True
@@ -157,40 +167,23 @@ def removePeca(tabuleiro, i, j):
         tabuleiro[i][j] = "-"
         return True
 
-## 
-# Funcoes de manipulacao do placar
-##
-
-# Cria um novo placar zerado.
 def novoPlacar(nJogadores):
-
     return [0] * nJogadores
 
-# Adiciona um ponto no placar para o jogador especificado.
 def incrementaPlacar(placar, jogador):
-
     placar[jogador] = placar[jogador] + 1
-    message = pickle.dumps(placar[jogador])
-    connection.send(message)
+    enviaMensagem(placar[jogador])
 
-# Imprime o placar atual.
 def imprimePlacar(placar):
-
     nJogadores = len(placar)
 
-    print("Placar:")
+    print("Placar: \n ---------------------")
 
-    print ("---------------------")
     for i in range(0, nJogadores):
         print ("Jogador {0}: {1:2d}".format(i + 1, placar[i]))
 
         data = ("Jogador {0}: {1:2d}".format(i + 1, placar[i]))
-        message = pickle.dumps(data)
-        connection.send(message)
-
-##
-# Funcoes de interacao com o usuario
-#
+        enviaMensagem(data)
 
 # Imprime informacoes basicas sobre o estado atual da partida.
 def imprimeStatus(tabuleiro, placar, vez):
@@ -205,8 +198,7 @@ def imprimeStatus(tabuleiro, placar, vez):
 
         print ("Vez do Jogador {0}.\n".format(vez + 1))
         vezJogador = ("Vez do Jogador {0}.\n".format(vez + 1))
-        message = pickle.dumps(vezJogador)
-        connection.send(message)
+        enviaMensagem(vezJogador)
 
 def leCoordenada(dim):
 
@@ -216,95 +208,50 @@ def leCoordenada(dim):
     try:
         i = int(var.split(' ')[0])
         j = int(var.split(' ')[1])
+
     except ValueError:
-        erro = ("Coordenadas invalidas! Use o formato \"i j\" (sem aspas),")
-        erro += ("\n")
+        erro = ("Coordenadas invalidas! Use o formato \"i j\" (sem aspas), \n")
         erro += ("onde i e j sao inteiros maiores ou iguais a 0 e menores que {0}".format(dim))
-        message = pickle.dumps(erro)
-        connection.send(message)
-
-        erro = ("Pressione <enter> para continuar...")
-        message = pickle.dumps(erro)
-        connection.send(message)
-
-        message = pickle.dumps(False)
-        connection.send(message)
-        return False
+        handleError(erro)
 
     if i < 0 or i >= dim:
         erro = ("Coordenada i deve ser maior ou igual a zero e menor que {0}".format(dim))
-        message = pickle.dumps(erro)
-        connection.send(message)
-
-        erro = ("Pressione <enter> para continuar...")
-        message = pickle.dumps(erro)
-        connection.send(message)
-
-        message = pickle.dumps(False)
-        connection.send(message)
-        return False
+        handleError(erro)
 
     if j < 0 or j >= dim:
         erro = ("Coordenada j deve ser maior ou igual a zero e menor que {0}".format(dim))
-        message = pickle.dumps(erro)
-        connection.send(message)
+        handleError(erro)
 
-        erro = ("Pressione <enter> para continuar...")
-        message = pickle.dumps(erro)
-        connection.send(message)
-        input("Pressione <enter> para continuar...")
-        message = pickle.dumps(False)
-        connection.send(message)
-        return False
-
-    #\/ talvez essa parte seja desnecessaria
-    messagei = pickle.dumps(i)
-    connection.send(messagei)
-
-    messagej = pickle.dumps(j)
-    connection.send(messagej)
+    enviaMensagem(i)
+    enviaMensagem(j)
 
     return (i, j)
-
 
 def limpaTela():
     os.system('cls' if os.name == 'nt' else 'clear')
 
-##
+
 # Programa principal
-##
 
 # Create a TCP/IP socket
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Bind the socket to the port
-server_address = ('localhost', 10000)
+server_address = ('localhost', 5000)
 sock.bind(server_address)
-
 
 # Listen for incoming connections
 sock.listen(1)
-
 connection, client_address = sock.accept()
-dim = int(sys.argv[1])
-nJogadores = int(sys.argv[2])
-#/\ precisa ser por parametro
-# Numero de jogadores
+
+limpaTela()
+dim = defineDimensao()
+nJogadores = defineNumeroJogadores()
 
 # Numero total de pares de pecas
 totalDePares = dim**2 / 2
 
-messageDim = pickle.dumps(dim)
-connection.send(messageDim)
-time.sleep(1)
-messageNJogadores = pickle.dumps(nJogadores)
-connection.send(messageNJogadores)
-
-time.sleep(2)
-limpaTela()
-
 # Cria um novo tabuleiro para a partida
-
 tabuleiro = novoTabuleiro(dim)
 
 # Cria um novo placar zerado
@@ -314,7 +261,6 @@ placar = novoPlacar(nJogadores)
 # casar.
 paresEncontrados = 0
 vez = 0
-
 while paresEncontrados < totalDePares:
 
     # Requisita primeira peca do proximo jogador
@@ -337,14 +283,13 @@ while paresEncontrados < totalDePares:
             data = ("Escolha uma peca ainda fechada!")
             data += ("\n")
             data += ("Pressione <enter> para continuar...")
-            message = pickle.dumps(data)
-            connection.send(message)
+            enviaMensagem(data)
             #input("Pressione <enter> para continuar...")
             continue
 
         break
 
-        # Requisita segunda peca do proximo jogador
+    # Requisita segunda peca do proximo jogador
     while True:
 
         # Imprime status do jogo
@@ -363,49 +308,39 @@ while paresEncontrados < totalDePares:
             data = ("Escolha uma peca ainda fechada!")
             data += ("\n")
             data += ("Pressione <enter> para continuar...")
-            message = pickle.dumps(data)
-            connection.send(message)
+            enviaMensagem(data)
             continue
 
         break
 
-        # Imprime status do jogo
     imprimeStatus(tabuleiro, placar, vez)
 
-    #print("Pecas escolhidas --> ({0}, {1}) e ({2}, {3})\n".format(i1, j1, i2, j2))
-    data = ("Pecas escolhidas --> ({0}, {1}) e ({2}, {3})\n".format(i1, j1, i2, j2))
-    message = pickle.dumps(data)
-    connection.send(message)
+    msg = ("Pecas escolhidas --> ({0}, {1}) e ({2}, {3})\n".format(i1, j1, i2, j2))
+    enviaMensagem(msg)
 
     # Pecas escolhidas sao iguais?
     if tabuleiro[i1][j1] == tabuleiro[i2][j2]:
-
-        print("Pecas casam! Ponto para o jogador {0}.".format(vez + 1))
-        data = ("Pecas casam! Ponto para o jogador {0}.".format(vez + 1))
-        message = pickle.dumps(data)
-        connection.send(message)
+        msg = ("Pecas casam! Ponto para o jogador {0}.".format(vez + 1))
+        print(msg)
+        enviaMensagem(msg)
         time.sleep(3)
         incrementaPlacar(placar, vez)
         paresEncontrados = paresEncontrados + 1
         removePeca(tabuleiro, i1, j1)
         removePeca(tabuleiro, i2, j2)
 
-        time.sleep(5)
     else:
-
         print("Pecas nao casam!")
-
         time.sleep(3)
 
         fechaPeca(tabuleiro, i1, j1)
         fechaPeca(tabuleiro, i2, j2)
         vez = (vez + 1) % nJogadores
 
-# Verificar o vencedor e imprimir
 pontuacaoMaxima = max(placar)
 vencedores = []
-for i in range(0, nJogadores):
 
+for i in range(0, nJogadores):
     if placar[i] == pontuacaoMaxima:
         vencedores.append(i)
 
@@ -413,24 +348,20 @@ if len(vencedores) > 1:
 
 
     #sys.stdout.write("Houve empate entre os jogadores ")
-    data = ("Houve empate entre os jogadores ")
-    message = pickle.dumps(data)
-    connection.send(message)
+    msg = ("Houve empate entre os jogadores ")
+    enviaMensagem(msg)
 
     for i in vencedores:
         sys.stdout.write(str(i + 1) + ' ')
         data = (str(i + 1) + ' ')
-        message = pickle.dumps(data)
-        connection.send(message)
+        enviaMensagem(msg)
 
     sys.stdout.write("\n")
 
 else:
+    msg = ("Jogador {0} foi o vencedor!".format(vencedores[0] + 1))
+    print(msg)
+    enviaMensagem(data)
+    time.sleep(3)
 
-    print("Jogador {0} foi o vencedor!".format(vencedores[0] + 1))
-    data = ("Jogador {0} foi o vencedor!".format(vencedores[0] + 1))
-    message = pickle.dumps(data)
-    connection.send(message)
-
-    # Clean up the connection
 connection.close()
