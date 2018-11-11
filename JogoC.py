@@ -12,6 +12,20 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_address = ('localhost', 10000)
 sock.connect(server_address)
 
+message = sock.recv(4096)
+var = pickle.loads(message)
+dim = var
+
+time.sleep(1)
+
+# Numero de jogadores
+message = sock.recv(4096)
+var = pickle.loads(message)
+nJogadores = var
+
+# Numero total de pares de pecas
+totalDePares = dim**2 / 2
+
 def novoTabuleiro(dim):
     # Cria um tabuleiro vazio.
     tabuleiro = []
@@ -131,13 +145,6 @@ def imprimePlacar(placar):
         var = pickle.loads(data)
         print(var)
 
-dim = 4
-
-# Numero de jogadores
-nJogadores = 1
-
-# Numero total de pares de pecas
-totalDePares = dim**2 / 2
 
 
 def leCoordenada(dim):
@@ -147,6 +154,7 @@ def leCoordenada(dim):
     sock.send(message)
 
     try:
+        #\/ rever
         i = int(var.split(' ')[0])
         j = int(var.split(' ')[1])
     except ValueError:
@@ -158,10 +166,6 @@ def leCoordenada(dim):
         var = pickle.loads(data)
         input(var)
 
-        #print("Coordenadas invalidas! Use o formato \"i j\" (sem aspas),")
-        #print("onde i e j sao inteiros maiores ou iguais a 0 e menores que {0}".format(dim))
-        #input("Pressione <enter> para continuar...")
-        #data = sock.recv(4096)
         data = sock.recv(4096)
         var = pickle.loads(data)
         return var
@@ -174,8 +178,7 @@ def leCoordenada(dim):
         data = sock.recv(4096)
         var = pickle.loads(data)
         input(var)
-        #print("Coordenada i deve ser maior ou igual a zero e menor que {0}".format(dim))
-        #input("Pressione <enter> para continuar...")
+
         data = sock.recv(4096)
         var = pickle.loads(data)
         return var
@@ -188,19 +191,17 @@ def leCoordenada(dim):
         data = sock.recv(4096)
         var = pickle.loads(data)
         input(var)
-        #print("Coordenada j deve ser maior ou igual a zero e menor que {0}".format(dim))
-        #input("Pressione <enter> para continuar...")
+
         data = sock.recv(4096)
         var = pickle.loads(data)
         return var
 
+    #\/talvez essa parte seja desnecessaria
     datai = sock.recv(4096)
     i = pickle.loads(datai)
 
     dataj = sock.recv(4096)
     j = pickle.loads(dataj)
-    print("valor de i ",i)
-    print("valor de j ",j)
     return (i, j)
 
 

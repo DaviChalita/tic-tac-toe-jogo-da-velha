@@ -27,16 +27,10 @@ def imprimeTabuleiro(tabuleiro):
     dim = len(tabuleiro)
     sys.stdout.write("     ")
 
-    blank = ("     ")
-
     for i in range(0, dim):
         sys.stdout.write("{0:2d} ".format(i))
 
-        formato = ("{0:2d} ".format(i))
-
     sys.stdout.write("\n")
-
-    pulal = ("\n")
 
     # Imprime separador horizontal
     sys.stdout.write("-----")
@@ -73,9 +67,6 @@ def imprimeTabuleiro(tabuleiro):
                 sys.stdout.write("{0:2d} ".format(tabuleiro[i][j]))
 
         sys.stdout.write("\n")
-        pulal3 = ("\n")
-       # connection.send(pulal3.dumps())
-    #connection.send(message)
 
 # Cria um novo tabuleiro com pecas aleatorias. 
 # 'dim' eh a dimensao do tabuleiro, necessariamente
@@ -266,6 +257,7 @@ def leCoordenada(dim):
         connection.send(message)
         return False
 
+    #\/ talvez essa parte seja desnecessaria
     messagei = pickle.dumps(i)
     connection.send(messagei)
 
@@ -278,16 +270,6 @@ def leCoordenada(dim):
 def limpaTela():
     os.system('cls' if os.name == 'nt' else 'clear')
 
-
-
-dim = 4
-#/\ precisa ser por parametro
-# Numero de jogadores
-nJogadores = 1
-
-# Numero total de pares de pecas
-totalDePares = dim**2 / 2
-
 ##
 # Programa principal
 ##
@@ -299,14 +281,30 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_address = ('localhost', 10000)
 sock.bind(server_address)
 
+
 # Listen for incoming connections
 sock.listen(1)
 
 connection, client_address = sock.accept()
+dim = int(sys.argv[1])
+nJogadores = int(sys.argv[2])
+#/\ precisa ser por parametro
+# Numero de jogadores
+
+# Numero total de pares de pecas
+totalDePares = dim**2 / 2
+
+messageDim = pickle.dumps(dim)
+connection.send(messageDim)
+time.sleep(1)
+messageNJogadores = pickle.dumps(nJogadores)
+connection.send(messageNJogadores)
+
 time.sleep(2)
 limpaTela()
 
 # Cria um novo tabuleiro para a partida
+
 tabuleiro = novoTabuleiro(dim)
 
 # Cria um novo placar zerado
@@ -316,6 +314,7 @@ placar = novoPlacar(nJogadores)
 # casar.
 paresEncontrados = 0
 vez = 0
+
 while paresEncontrados < totalDePares:
 
     # Requisita primeira peca do proximo jogador
@@ -435,7 +434,3 @@ else:
 
     # Clean up the connection
 connection.close()
-    #connection.close()
-
-
-
