@@ -197,10 +197,10 @@ def fechaPeca(tabuleiro, i, j):
 
 # Programa principal
 limpaTela()
-dim = recebeMensagem()
 nJogadores = recebeMensagem()
-totalDePares = dim**2 / 2
+dim = recebeMensagem()
 tabuleiro = novoTabuleiro(dim)
+totalDePares = dim**2 / 2
 
 placar = novoPlacar(nJogadores)
 paresEncontrados = 0
