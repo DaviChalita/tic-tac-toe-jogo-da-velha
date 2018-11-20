@@ -15,12 +15,13 @@ def enviaMensagem(msg):
 
 def defineDimensao():
     dim = int(input("Especifique a dimensão: "))
-    enviaMensagem(dim)
+    # enviaMensagem(dim)
+    print(type(dim))
     return dim
 
 def defineNumeroJogadores():
     nJogadores = int(input("Especifique o numero de jogadores: "))
-    enviaMensagem(nJogadores)
+    # enviaMensagem(nJogadores)
     return nJogadores
 
 def handleError(erro):    
@@ -240,13 +241,14 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_address = ('localhost', 5000)
 sock.bind(server_address)
 
+limpaTela()
+nJogadores = defineNumeroJogadores()
+
 # Listen for incoming connections
 sock.listen(1)
 connection, client_address = sock.accept()
 
-limpaTela()
 dim = defineDimensao()
-nJogadores = defineNumeroJogadores()
 
 # Numero total de pares de pecas
 totalDePares = dim**2 / 2
