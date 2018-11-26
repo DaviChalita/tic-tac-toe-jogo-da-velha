@@ -21,10 +21,10 @@ def defineNumeroJogadores():
     nJogadores = int(input("Especifique o numero de jogadores: "))
     return nJogadores
 
-def handleError(erro):    
+def handleError(erro):
     enviaMensagem(erro)
 
-def limpaTela(): 
+def limpaTela():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 def imprimeTabuleiro(tabuleiro):
@@ -76,7 +76,7 @@ def imprimeTabuleiro(tabuleiro):
 
         sys.stdout.write("\n")
 
-# Cria um novo tabuleiro com pecas aleatorias. 
+# Cria um novo tabuleiro com pecas aleatorias.
 # 'dim' eh a dimensao do tabuleiro, necessariamente
 # par.
 def novoTabuleiro(dim):
@@ -101,7 +101,7 @@ def novoTabuleiro(dim):
 
             posicoesDisponiveis.append((i, j))
 
-    # Varre todas as pecas que serao colocadas no 
+    # Varre todas as pecas que serao colocadas no
     # tabuleiro e posiciona cada par de pecas iguais
     # em posicoes aleatorias.
     for j in range(0, dim // 2):
@@ -109,7 +109,7 @@ def novoTabuleiro(dim):
 
             # Sorteio da posicao da segunda peca com valor 'i'
             maximo = len(posicoesDisponiveis)
-            indiceAleatorio = random.randint(0, maximo - 1)            
+            indiceAleatorio = random.randint(0, maximo - 1)
             enviaMensagem(indiceAleatorio)
 
             rI, rJ = posicoesDisponiveis.pop(indiceAleatorio)
@@ -240,130 +240,130 @@ sock.bind(server_address)
 
 limpaTela()
 nJogadores = defineNumeroJogadores()
+while True:
+    # Listen for incoming connections
+    sock.listen(nJogadores)
+    connection, client_address = sock.accept()
 
-# Listen for incoming connections
-sock.listen(nJogadores)
-connection, client_address = sock.accept()
+    dim = defineDimensao()
 
-dim = defineDimensao()
+    enviaMensagem(nJogadores)
+    enviaMensagem(dim)
 
-enviaMensagem(nJogadores)
-enviaMensagem(dim)
+    # Numero total de pares de pecas
+    totalDePares = dim**2 / 2
 
-# Numero total de pares de pecas
-totalDePares = dim**2 / 2
+    # Cria um novo tabuleiro para a partida
+    tabuleiro = novoTabuleiro(dim)
 
-# Cria um novo tabuleiro para a partida
-tabuleiro = novoTabuleiro(dim)
+    # Cria um novo placar zerado
+    placar = novoPlacar(nJogadores)
 
-# Cria um novo placar zerado
-placar = novoPlacar(nJogadores)
+    # Partida continua enquanto ainda ha pares de pecas a
+    # casar.
+    paresEncontrados = 0
+    vez = 0
+    while paresEncontrados < totalDePares:
 
-# Partida continua enquanto ainda ha pares de pecas a
-# casar.
-paresEncontrados = 0
-vez = 0
-while paresEncontrados < totalDePares:
+        # Requisita primeira peca do proximo jogador
+        while True:
 
-    # Requisita primeira peca do proximo jogador
-    while True:
+            # Imprime status do jogo
+            imprimeStatus(tabuleiro, placar, vez)
 
-        # Imprime status do jogo
+            # Solicita coordenadas da primeira peca.
+            #global coordenadas
+            coordenadas = leCoordenada(dim)
+            if coordenadas == False:
+                continue
+
+            i1, j1 = coordenadas
+
+            # Testa se peca ja esta aberta (ou removida)
+            if abrePeca(tabuleiro, i1, j1) == False:
+
+                data = ("Escolha uma peca ainda fechada!")
+                data += ("\n")
+                data += ("Pressione <enter> para continuar...")
+                enviaMensagem(data)
+                #input("Pressione <enter> para continuar...")
+                continue
+
+            break
+
+        # Requisita segunda peca do proximo jogador
+        while True:
+
+            # Imprime status do jogo
+            imprimeStatus(tabuleiro, placar, vez)
+
+            # Solicita coordenadas da segunda peca.
+
+            coordenadas = leCoordenada(dim)
+            if coordenadas == False:
+                continue
+
+            i2, j2 = coordenadas
+
+            # Testa se peca ja esta aberta (ou removida)
+            if abrePeca(tabuleiro, i2, j2) == False:
+                data = ("Escolha uma peca ainda fechada!")
+                data += ("\n")
+                data += ("Pressione <enter> para continuar...")
+                enviaMensagem(data)
+                continue
+
+            break
+
         imprimeStatus(tabuleiro, placar, vez)
 
-        # Solicita coordenadas da primeira peca.
-        #global coordenadas
-        coordenadas = leCoordenada(dim)
-        if coordenadas == False:
-            continue
+        msg = ("Pecas escolhidas --> ({0}, {1}) e ({2}, {3})\n".format(i1, j1, i2, j2))
+        enviaMensagem(msg)
 
-        i1, j1 = coordenadas
+        # Pecas escolhidas sao iguais?
+        if tabuleiro[i1][j1] == tabuleiro[i2][j2]:
+            msg = ("Pecas casam! Ponto para o jogador {0}.".format(vez + 1))
+            print(msg)
+            enviaMensagem(msg)
+            time.sleep(3)
+            incrementaPlacar(placar, vez)
+            paresEncontrados = paresEncontrados + 1
+            removePeca(tabuleiro, i1, j1)
+            removePeca(tabuleiro, i2, j2)
 
-        # Testa se peca ja esta aberta (ou removida)
-        if abrePeca(tabuleiro, i1, j1) == False:
+        else:
+            print("Pecas nao casam!")
+            time.sleep(3)
 
-            data = ("Escolha uma peca ainda fechada!")
-            data += ("\n")
-            data += ("Pressione <enter> para continuar...")
-            enviaMensagem(data)
-            #input("Pressione <enter> para continuar...")
-            continue
+            fechaPeca(tabuleiro, i1, j1)
+            fechaPeca(tabuleiro, i2, j2)
+            vez = (vez + 1) % nJogadores
 
-        break
+    pontuacaoMaxima = max(placar)
+    vencedores = []
 
-    # Requisita segunda peca do proximo jogador
-    while True:
+    for i in range(0, nJogadores):
+        if placar[i] == pontuacaoMaxima:
+            vencedores.append(i)
 
-        # Imprime status do jogo
-        imprimeStatus(tabuleiro, placar, vez)
+    if len(vencedores) > 1:
 
-        # Solicita coordenadas da segunda peca.
 
-        coordenadas = leCoordenada(dim)
-        if coordenadas == False:
-            continue
+        #sys.stdout.write("Houve empate entre os jogadores ")
+        msg = ("Houve empate entre os jogadores ")
+        enviaMensagem(msg)
 
-        i2, j2 = coordenadas
+        for i in vencedores:
+            sys.stdout.write(str(i + 1) + ' ')
+            data = (str(i + 1) + ' ')
+            enviaMensagem(msg)
 
-        # Testa se peca ja esta aberta (ou removida)
-        if abrePeca(tabuleiro, i2, j2) == False:
-            data = ("Escolha uma peca ainda fechada!")
-            data += ("\n")
-            data += ("Pressione <enter> para continuar...")
-            enviaMensagem(data)
-            continue
+        sys.stdout.write("\n")
 
-        break
-
-    imprimeStatus(tabuleiro, placar, vez)
-
-    msg = ("Pecas escolhidas --> ({0}, {1}) e ({2}, {3})\n".format(i1, j1, i2, j2))
-    enviaMensagem(msg)
-
-    # Pecas escolhidas sao iguais?
-    if tabuleiro[i1][j1] == tabuleiro[i2][j2]:
-        msg = ("Pecas casam! Ponto para o jogador {0}.".format(vez + 1))
+    else:
+        msg = ("Jogador {0} foi o vencedor!".format(vencedores[0] + 1))
         print(msg)
         enviaMensagem(msg)
         time.sleep(3)
-        incrementaPlacar(placar, vez)
-        paresEncontrados = paresEncontrados + 1
-        removePeca(tabuleiro, i1, j1)
-        removePeca(tabuleiro, i2, j2)
 
-    else:
-        print("Pecas nao casam!")
-        time.sleep(3)
-
-        fechaPeca(tabuleiro, i1, j1)
-        fechaPeca(tabuleiro, i2, j2)
-        vez = (vez + 1) % nJogadores
-
-pontuacaoMaxima = max(placar)
-vencedores = []
-
-for i in range(0, nJogadores):
-    if placar[i] == pontuacaoMaxima:
-        vencedores.append(i)
-
-if len(vencedores) > 1:
-
-
-    #sys.stdout.write("Houve empate entre os jogadores ")
-    msg = ("Houve empate entre os jogadores ")
-    enviaMensagem(msg)
-
-    for i in vencedores:
-        sys.stdout.write(str(i + 1) + ' ')
-        data = (str(i + 1) + ' ')
-        enviaMensagem(msg)
-
-    sys.stdout.write("\n")
-
-else:
-    msg = ("Jogador {0} foi o vencedor!".format(vencedores[0] + 1))
-    print(msg)
-    enviaMensagem(data)
-    time.sleep(3)
-
-connection.close()
+    connection.close()
