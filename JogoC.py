@@ -3,7 +3,7 @@ import socket
 import os
 import sys
 import time
-
+#LADO CLIENTE
 # Cria um socket TCP/IP
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
