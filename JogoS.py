@@ -6,28 +6,35 @@ import time
 import random
 
 # Funcoes
-
+#envia mensagens somente para o jogador da vez
 def enviaMensagemIndividual(msg, vez):
     message = pickle.dumps(msg)
     jogadores[vez].send(message)
     time.sleep(0.1)
     return msg
 
+#envia mensagens para todos jogadores
 def enviaMensagemTodos(msg, nJogadores):
     for i in range(0, nJogadores):
         enviaMensagemIndividual(msg, i)
 
+#envia mensagens para todos menos o jogador da vez
+def enviaMensagemTodosMenosJogadorVez(msg, nJogadores):
+        for i in range(0, nJogadores):
+            if(i != vez):
+                enviaMensagemIndividual(msg, i)
+#define as dimensoes do tabuleiro
 def defineDimensao():
     dim = int(input("Especifique a dimensão: "))
     return dim
-
+#define o numero de jogadores da partida
 def defineNumeroJogadores():
     nJogadores = int(input("Especifique o numero de jogadores: "))
     return nJogadores
-
+#limpa a tela
 def limpaTela():
     os.system('cls' if os.name == 'nt' else 'clear')
-
+#imprime o tabuleiro
 def imprimeTabuleiro(tabuleiro):
     limpaTela()
 
@@ -37,7 +44,6 @@ def imprimeTabuleiro(tabuleiro):
 
     for i in range(0, dim):
         sys.stdout.write("{0:2d} ".format(i))
-        formato = ("{0:2d} ".format(i))
 
     sys.stdout.write("\n")
 
@@ -72,7 +78,6 @@ def imprimeTabuleiro(tabuleiro):
             else:
 
                 # Nao, imprime '?'
-                #sys.stdout.write(" ? ")
                 sys.stdout.write("{0:2d} ".format(tabuleiro[i][j]))
 
         sys.stdout.write("\n")
@@ -165,14 +170,14 @@ def removePeca(tabuleiro, i, j):
     else:
         tabuleiro[i][j] = "-"
         return True
-
+#mostra novo placar
 def novoPlacar(nJogadores):
     return [0] * nJogadores
-
+#incrementa valor do placar
 def incrementaPlacar(placar, jogador):
     placar[jogador] = placar[jogador] + 1
     enviaMensagemTodos(placar[jogador], nJogadores)
-
+#imprime o placar
 def imprimePlacar(placar):
     nJogadores = len(placar)
 
@@ -198,7 +203,7 @@ def imprimeStatus(tabuleiro, placar, vez):
         print ("Vez do Jogador {0}.\n".format(vez + 1))
         vezJogador = ("Vez do Jogador {0}.\n".format(vez + 1))
         enviaMensagemTodos(vezJogador, nJogadores)
-
+#le as coordenadas recebidas do cliente
 def leCoordenada(dim, vez):
     data = jogadores[vez].recv(4096)
     var = pickle.loads(data)
@@ -223,35 +228,42 @@ def leCoordenada(dim, vez):
     enviaMensagemIndividual(j, vez)
 
     return (i, j)
-
+#limpa a tela
 def limpaTela():
     os.system('cls' if os.name == 'nt' else 'clear')
 
 
 # Programa principal
 
-# Create a TCP/IP socket
+# Cria um socket TCP/IP
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-# Bind the socket to the port
+# Liga o socket à porta
 server_address = ('localhost', 5000)
 sock.bind(server_address)
 
 
-# seta conexoes
-limpaTela()
-nJogadores = defineNumeroJogadores()
+
+# while True para quando jogo acabar esperar novas conexoes
 while True:
+    limpaTela()
+    #define a qtd de jogadores
+    nJogadores = defineNumeroJogadores()
+    #vetor que guardará as conexoes
     jogadores = []
 
     for i in range(0, nJogadores):
-        # Listen for incoming connections
+        # Listen para conexões recebidas
+
         sock.listen(nJogadores)
         connection, client_address = sock.accept()
+        #novas conexoes sao adicionadas ao vetor
         novoJogador = connection
         jogadores.append(novoJogador)
+        #envia numero da sua vez para o cliente
         enviaMensagemIndividual(i, i)
 
+    #define o tamanho do tabuleiro
     dim = defineDimensao()
 
     enviaMensagemTodos(nJogadores, nJogadores)
@@ -267,13 +279,13 @@ while True:
     placar = novoPlacar(nJogadores)
 
     # Partida continua enquanto ainda ha pares de pecas a
-    # casar.
+    #     # casar.
     paresEncontrados = 0
     vez = 0
-    
+
     while paresEncontrados < totalDePares:
 
-        #imprimeStatus(tabuleiro, placar, vez)
+        imprimeStatus(tabuleiro, placar, vez)
 
         # Requisita primeira peca do proximo jogador
         while True:
@@ -282,7 +294,6 @@ while True:
             imprimeStatus(tabuleiro, placar, vez)
 
             # Solicita coordenadas da primeira peca.
-            #global coordenadas
             coordenadas = leCoordenada(dim, vez)
             if coordenadas == False:
                 continue
@@ -296,7 +307,6 @@ while True:
                 data += ("\n")
                 data += ("Pressione <enter> para continuar...")
                 enviaMensagemIndividual(data, vez)
-                #input("Pressione <enter> para continuar...")
                 continue
 
             break
@@ -324,26 +334,18 @@ while True:
                 continue
             break
 
-        enviaMensagemTodos(i1, nJogadores)
-        enviaMensagemTodos(j1, nJogadores)
-        enviaMensagemTodos(i2, nJogadores)
-        enviaMensagemTodos(j2, nJogadores)
-
-#1
+        enviaMensagemTodosMenosJogadorVez(i1, nJogadores)
+        enviaMensagemTodosMenosJogadorVez(j1, nJogadores)
+        enviaMensagemTodosMenosJogadorVez(i2, nJogadores)
+        enviaMensagemTodosMenosJogadorVez(j2, nJogadores)
         imprimeStatus(tabuleiro, placar, vez)
-#2
-        msg = ("Pecas escolhidas --> ({0}, {1}) e ({2}, {3})\n".format(i1, j1, i2, j2))
-        enviaMensagemTodos(msg, vez)
-        #pares = [i1, j1, i2, j2]
-#3?
-        #enviaMensagemTodos(pares, nJogadores)
 
         # Pecas escolhidas sao iguais?
-#3
+
         msg = (tabuleiro[i1][j1] == tabuleiro[i2][j2])
         enviaMensagemTodos(msg, nJogadores)
 
-        if msg == True:
+        if msg:
             msg = ("Pecas casam! Ponto para o jogador {0}.".format(vez + 1))
             print(msg)
 
@@ -371,8 +373,6 @@ while True:
 
     if len(vencedores) > 1:
 
-
-        #sys.stdout.write("Houve empate entre os jogadores ")
         msg = ("Houve empate entre os jogadores ")
         enviaMensagemTodos(msg, nJogadores)
 
