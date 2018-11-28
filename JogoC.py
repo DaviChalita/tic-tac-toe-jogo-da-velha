@@ -7,22 +7,23 @@ import time
 # Cria um socket TCP/IP
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-#Conecta o socket à porta que servidor está escutando
+# Conecta o socket à porta que servidor está escutando
 server_address = ('localhost', 5000)
 sock.connect(server_address)
 
-#recebe a mensagem do servidor
+# Recebe mensagem do servidor
 def recebeMensagem():
     data = sock.recv(4096)
     message = pickle.loads(data)
     time.sleep(0.1)
     return message
 
-#recebe se der erro
+# Lida com erro
 def handleError():
     err = recebeMensagem()
     print(err)
-#cria novo tabuleiro
+
+# Cria tabuleiro
 def novoTabuleiro(dim):
     tabuleiro = []
 
@@ -34,17 +35,14 @@ def novoTabuleiro(dim):
 
         tabuleiro.append(linha)
 
-    # Cria uma lista de todas as posicoes do tabuleiro. Util para
-    # sortearmos posicoes aleatoriamente para as pecas.
+    # Cria uma lista de todas as posicoes do tabuleiro
     posicoesDisponiveis = []
     for i in range(0, dim):
 
         for j in range(0, dim):
             posicoesDisponiveis.append((i, j))
 
-    # Varre todas as pecas que serao colocadas no
-    # tabuleiro e posiciona cada par de pecas iguais
-    # em posicoes aleatorias.
+    # Varre todas as peças que serão colocadas no tabuleiro e posiciona cada par de pecas iguais em posicoes aleatórias.
     for j in range(0, dim // 2):
         for i in range(1, dim + 1):
             
@@ -59,10 +57,12 @@ def novoTabuleiro(dim):
 
             tabuleiro[rI][rJ] = -i
     return tabuleiro
-#faz um novo placar
+
+# cria um novo placar
 def novoPlacar(nJogadores):
     return [0] * nJogadores
-#imprime status do tabuleiro
+
+# Imprime status do tabuleiro
 def imprimeStatus(tabuleiro, placar, nJogadores, vez):
         imprimeTabuleiro(tabuleiro)
         sys.stdout.write('\n')
@@ -71,9 +71,10 @@ def imprimeStatus(tabuleiro, placar, nJogadores, vez):
         sys.stdout.write('\n')
 
         sys.stdout.write('\n')
-        var = recebeMensagem()
-        print(var)
-#imprime o tabuleiro
+        msg = recebeMensagem()
+        print(msg)
+
+# Imprime o tabuleiro
 def imprimeTabuleiro(tabuleiro):
     limpaTela()
 
@@ -121,23 +122,24 @@ def imprimeTabuleiro(tabuleiro):
                 #sys.stdout.write("{0:2d} ".format(tabuleiro[i][j]))
 
         sys.stdout.write("\n")
-#imprime o placar
+
+# Imprime o placar
 def imprimePlacar(placar, nJogadores):
     print("Placar:")
     print("---------------------")
     for i in range(0, nJogadores):
         msg = recebeMensagem()
         print(msg)
-#le as coordenadas inseridas pelo jogador e manda para o cliente
-def leCoordenada(dim):
 
-    var = input("Especifique uma peca: ")
-    message = pickle.dumps(var)
+# Lê as coordenadas inseridas pelo jogador e envia para o servidor
+def leCoordenada(dim):
+    data = input("Especifique uma peca: ")
+    message = pickle.dumps(data)
     sock.send(message)
 
     try:
-        i = int(var.split(' ')[0])
-        j = int(var.split(' ')[1])
+        i = int(data.split(' ')[0])
+        j = int(data.split(' ')[1])
 
     except ValueError:
         handleError()
@@ -153,36 +155,38 @@ def leCoordenada(dim):
 
     return (i, j)
 
-#limpa a tela
+# Limpa a tela
 def limpaTela():
     os.system('cls' if os.name == 'nt' else 'clear')
-#abre a peça do tabuleiro
+
+# Abre a peça do tabuleiro
 def abrePeca(tabuleiro, i, j):
 
     if tabuleiro[i][j] == '-':
         return False
+
     elif tabuleiro[i][j] < 0:
         tabuleiro[i][j] = -tabuleiro[i][j]
         return True
 
     return False
-#incrementa o placar
+
+# Incrementa o placar
 def incrementaPlacar(placar, jogador):
-    message = recebeMensagem()
-    placar[jogador] = message
+    msg = recebeMensagem()
+    placar[jogador] = msg
 
-#remove a peça
+# Remove a peça
 def removePeca(tabuleiro, i, j):
-
     if tabuleiro[i][j] == '-':
         return False
+
     else:
-        tabuleiro[i][j] = "-"
+        tabuleiro[i][j] = '-'
         return True
 
-#fecha a peça
+# Fecha a peça
 def fechaPeca(tabuleiro, i, j):
-
     if tabuleiro[i][j] == '-':
         return False
 
@@ -192,33 +196,40 @@ def fechaPeca(tabuleiro, i, j):
 
     return False
 
+
 # Programa principal
+
 limpaTela()
-#recebe o seu id
+
+# Jogador recebe identificador
 id = recebeMensagem()
 print("Você é o jogador número " + str(id + 1))
-#recebe a qtd de jogadores
+
+# Variável que guarda quantidade de jogadores
 nJogadores = recebeMensagem()
-#recebe o tamanho do tabuleiro
+
+# Variável que guarda dimensão do tabuleiro
 dim = recebeMensagem()
+
 tabuleiro = novoTabuleiro(dim)
 placar = novoPlacar(nJogadores)
 totalDePares = dim**2 / 2
 paresEncontrados = 0
 vez = 0
-#inicializa as variaveis (valor arbitrario)
+
+# Inicializa variáveis que guardam posições do tabuleiro (valor arbitrário)
 i1 = 0
 j1 = 0
 i2 = 0
-j2= 0
+j2 = 0
 
-# Partida continua enquanto ainda ha pares de pecas a
-# casar.
+# Partida continua enquanto ainda ha pares de pecas a casar.
 while paresEncontrados < totalDePares:
 
     imprimeStatus(tabuleiro, placar, nJogadores, vez)
 
     if (vez == id):
+
         while True:
             imprimeStatus(tabuleiro, placar, nJogadores, vez)
 
@@ -230,11 +241,11 @@ while paresEncontrados < totalDePares:
             il, jl = coordenadas
 
             if abrePeca(tabuleiro, il, jl) == False:
-                message = recebeMensagem()
-                input(message)
+                msg = recebeMensagem()
+                input(msg)
                 continue
-
             break
+
         while True:
 
             imprimeStatus(tabuleiro, placar, nJogadores, vez)
@@ -246,25 +257,24 @@ while paresEncontrados < totalDePares:
             i2, j2 = coordenadas
 
             if abrePeca(tabuleiro, i2, j2) == False:
-                message = recebeMensagem()
-                input(message)
+                msg = recebeMensagem()
+                input(msg)
                 continue
-
             break
+
     else:
         imprimeStatus(tabuleiro, placar, nJogadores, vez)
-        #erro foi encontrado e foi necessario adicionar variavel
-        #sincronizar para consertá-lo
-        sincronizar = recebeMensagem()
-        sincronizar = recebeMensagem()
-        sincronizar = recebeMensagem()
+        
+        # Varíavel descarta utilizada para lidar com um problema de sincronização
+        descarta = recebeMensagem()
+        descarta = recebeMensagem()
+        descarta = recebeMensagem()
 
         i1 = recebeMensagem()
         j1 = recebeMensagem()
-
         abrePeca(tabuleiro, i1, j1)
-        i2 = recebeMensagem()
 
+        i2 = recebeMensagem()
         j2 = recebeMensagem()
         abrePeca(tabuleiro, i2, j2)
 
@@ -272,6 +282,7 @@ while paresEncontrados < totalDePares:
 
     # Mensagem de jogador acertou ou não
     msg = recebeMensagem()
+
     if msg:
         msg = ("Pecas casam! Ponto para o jogador {0}.".format(vez + 1))
         print(msg)
@@ -291,26 +302,26 @@ while paresEncontrados < totalDePares:
 
     time.sleep(3)
 
-# Verificar o vencedor e imprimir
+# Verifica vencedor
 pontuacaoMaxima = max(placar)
 vencedores = []
-for i in range(0, nJogadores):
 
+for i in range(0, nJogadores):
     if placar[i] == pontuacaoMaxima:
         vencedores.append(i)
 
 if len(vencedores) > 1:
-    message = recebeMensagem()
-    sys.stdout.write(message)
+    msg = recebeMensagem()
+    sys.stdout.write(msg)
 
     for i in vencedores:
-        message = recebeMensagem()
-        sys.stdout.write(message)
+        msg = recebeMensagem()
+        sys.stdout.write(msg)
 
     sys.stdout.write("\n")
 
 else:
-    message = recebeMensagem()
-    sys.stdout.write(message)
+    msg = recebeMensagem()
+    sys.stdout.write(msg)
 
 sock.close()
