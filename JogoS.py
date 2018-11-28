@@ -4,7 +4,7 @@ import os
 import sys
 import time
 import random
-
+#LADO SERVIDOR
 # Funcoes
 #envia mensagens somente para o jogador da vez
 def enviaMensagemIndividual(msg, vez):
