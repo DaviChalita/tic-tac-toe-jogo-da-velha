@@ -7,11 +7,15 @@ import random
 
 # Funcoes
 
-def enviaMensagem(msg):
+def enviaMensagemIndividual(msg, vez):
     message = pickle.dumps(msg)
-    connection.send(message)
+    jogadores[vez].send(message)
     time.sleep(0.1)
     return msg
+
+def enviaMensagemTodos(msg, nJogadores):
+    for i in range(0, nJogadores):
+        enviaMensagemIndividual(msg, i)
 
 def defineDimensao():
     dim = int(input("Especifique a dimensão: "))
@@ -20,9 +24,6 @@ def defineDimensao():
 def defineNumeroJogadores():
     nJogadores = int(input("Especifique o numero de jogadores: "))
     return nJogadores
-
-def handleError(erro):
-    enviaMensagem(erro)
 
 def limpaTela():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -110,7 +111,7 @@ def novoTabuleiro(dim):
             # Sorteio da posicao da segunda peca com valor 'i'
             maximo = len(posicoesDisponiveis)
             indiceAleatorio = random.randint(0, maximo - 1)
-            enviaMensagem(indiceAleatorio)
+            enviaMensagemTodos(indiceAleatorio, nJogadores)
 
             rI, rJ = posicoesDisponiveis.pop(indiceAleatorio)
 
@@ -119,7 +120,7 @@ def novoTabuleiro(dim):
             # Sorteio da posicao da segunda peca com valor 'i'
             maximo = len(posicoesDisponiveis)
             indiceAleatorio = random.randint(0, maximo - 1)
-            enviaMensagem(indiceAleatorio)
+            enviaMensagemTodos(indiceAleatorio, nJogadores)
             rI, rJ = posicoesDisponiveis.pop(indiceAleatorio)
 
             tabuleiro[rI][rJ] = -i
@@ -170,7 +171,7 @@ def novoPlacar(nJogadores):
 
 def incrementaPlacar(placar, jogador):
     placar[jogador] = placar[jogador] + 1
-    enviaMensagem(placar[jogador])
+    enviaMensagemTodos(placar[jogador], nJogadores)
 
 def imprimePlacar(placar):
     nJogadores = len(placar)
@@ -181,7 +182,7 @@ def imprimePlacar(placar):
         print ("Jogador {0}: {1:2d}".format(i + 1, placar[i]))
 
         data = ("Jogador {0}: {1:2d}".format(i + 1, placar[i]))
-        enviaMensagem(data)
+        enviaMensagemTodos(data, nJogadores)
 
 # Imprime informacoes basicas sobre o estado atual da partida.
 def imprimeStatus(tabuleiro, placar, vez):
@@ -196,13 +197,11 @@ def imprimeStatus(tabuleiro, placar, vez):
 
         print ("Vez do Jogador {0}.\n".format(vez + 1))
         vezJogador = ("Vez do Jogador {0}.\n".format(vez + 1))
-        enviaMensagem(vezJogador)
+        enviaMensagemTodos(vezJogador, nJogadores)
 
-def leCoordenada(dim):
-
-    data = connection.recv(4096)
+def leCoordenada(dim, vez):
+    data = jogadores[vez].recv(4096)
     var = pickle.loads(data)
-
     try:
         i = int(var.split(' ')[0])
         j = int(var.split(' ')[1])
@@ -210,18 +209,18 @@ def leCoordenada(dim):
     except ValueError:
         erro = ("Coordenadas invalidas! Use o formato \"i j\" (sem aspas), \n")
         erro += ("onde i e j sao inteiros maiores ou iguais a 0 e menores que {0}".format(dim))
-        handleError(erro)
+        enviaMensagemIndividual(erro, vez)
 
     if i < 0 or i >= dim:
         erro = ("Coordenada i deve ser maior ou igual a zero e menor que {0}".format(dim))
-        handleError(erro)
+        enviaMensagemIndividual(erro, vez)
 
     if j < 0 or j >= dim:
         erro = ("Coordenada j deve ser maior ou igual a zero e menor que {0}".format(dim))
-        handleError(erro)
+        enviaMensagemIndividual(erro, vez)
 
-    enviaMensagem(i)
-    enviaMensagem(j)
+    enviaMensagemIndividual(i, vez)
+    enviaMensagemIndividual(j, vez)
 
     return (i, j)
 
@@ -238,17 +237,25 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_address = ('localhost', 5000)
 sock.bind(server_address)
 
+
+# seta conexoes
 limpaTela()
 nJogadores = defineNumeroJogadores()
 while True:
-    # Listen for incoming connections
-    sock.listen(nJogadores)
-    connection, client_address = sock.accept()
+    jogadores = []
+
+    for i in range(0, nJogadores):
+        # Listen for incoming connections
+        sock.listen(nJogadores)
+        connection, client_address = sock.accept()
+        novoJogador = connection
+        jogadores.append(novoJogador)
+        enviaMensagemIndividual(i, i)
 
     dim = defineDimensao()
 
-    enviaMensagem(nJogadores)
-    enviaMensagem(dim)
+    enviaMensagemTodos(nJogadores, nJogadores)
+    enviaMensagemTodos(dim, nJogadores)
 
     # Numero total de pares de pecas
     totalDePares = dim**2 / 2
@@ -263,7 +270,10 @@ while True:
     # casar.
     paresEncontrados = 0
     vez = 0
+    
     while paresEncontrados < totalDePares:
+
+        #imprimeStatus(tabuleiro, placar, vez)
 
         # Requisita primeira peca do proximo jogador
         while True:
@@ -273,11 +283,11 @@ while True:
 
             # Solicita coordenadas da primeira peca.
             #global coordenadas
-            coordenadas = leCoordenada(dim)
+            coordenadas = leCoordenada(dim, vez)
             if coordenadas == False:
                 continue
 
-            i1, j1 = coordenadas
+            i1, j1 = coordenadas            
 
             # Testa se peca ja esta aberta (ou removida)
             if abrePeca(tabuleiro, i1, j1) == False:
@@ -285,7 +295,7 @@ while True:
                 data = ("Escolha uma peca ainda fechada!")
                 data += ("\n")
                 data += ("Pressione <enter> para continuar...")
-                enviaMensagem(data)
+                enviaMensagemIndividual(data, vez)
                 #input("Pressione <enter> para continuar...")
                 continue
 
@@ -299,7 +309,7 @@ while True:
 
             # Solicita coordenadas da segunda peca.
 
-            coordenadas = leCoordenada(dim)
+            coordenadas = leCoordenada(dim, vez)
             if coordenadas == False:
                 continue
 
@@ -310,34 +320,47 @@ while True:
                 data = ("Escolha uma peca ainda fechada!")
                 data += ("\n")
                 data += ("Pressione <enter> para continuar...")
-                enviaMensagem(data)
+                enviaMensagemIndividual(data, vez)
                 continue
-
             break
 
-        imprimeStatus(tabuleiro, placar, vez)
+        enviaMensagemTodos(i1, nJogadores)
+        enviaMensagemTodos(j1, nJogadores)
+        enviaMensagemTodos(i2, nJogadores)
+        enviaMensagemTodos(j2, nJogadores)
 
+#1
+        imprimeStatus(tabuleiro, placar, vez)
+#2
         msg = ("Pecas escolhidas --> ({0}, {1}) e ({2}, {3})\n".format(i1, j1, i2, j2))
-        enviaMensagem(msg)
+        enviaMensagemTodos(msg, vez)
+        #pares = [i1, j1, i2, j2]
+#3?
+        #enviaMensagemTodos(pares, nJogadores)
 
         # Pecas escolhidas sao iguais?
-        if tabuleiro[i1][j1] == tabuleiro[i2][j2]:
+#3
+        msg = (tabuleiro[i1][j1] == tabuleiro[i2][j2])
+        enviaMensagemTodos(msg, nJogadores)
+
+        if msg == True:
             msg = ("Pecas casam! Ponto para o jogador {0}.".format(vez + 1))
             print(msg)
-            enviaMensagem(msg)
-            time.sleep(3)
+
             incrementaPlacar(placar, vez)
             paresEncontrados = paresEncontrados + 1
             removePeca(tabuleiro, i1, j1)
             removePeca(tabuleiro, i2, j2)
 
         else:
-            print("Pecas nao casam!")
-            time.sleep(3)
+            msg = ("Pecas não casam!")
+            print(msg)
 
             fechaPeca(tabuleiro, i1, j1)
             fechaPeca(tabuleiro, i2, j2)
             vez = (vez + 1) % nJogadores
+
+        time.sleep(3)
 
     pontuacaoMaxima = max(placar)
     vencedores = []
@@ -351,19 +374,19 @@ while True:
 
         #sys.stdout.write("Houve empate entre os jogadores ")
         msg = ("Houve empate entre os jogadores ")
-        enviaMensagem(msg)
+        enviaMensagemTodos(msg, nJogadores)
 
         for i in vencedores:
             sys.stdout.write(str(i + 1) + ' ')
             data = (str(i + 1) + ' ')
-            enviaMensagem(msg)
+            enviaMensagemTodos(msg, nJogadores)
 
         sys.stdout.write("\n")
 
     else:
         msg = ("Jogador {0} foi o vencedor!".format(vencedores[0] + 1))
         print(msg)
-        enviaMensagem(msg)
+        enviaMensagemTodos(msg, nJogadores)
         time.sleep(3)
 
     connection.close()
